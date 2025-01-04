@@ -4,6 +4,29 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchForm = document.getElementById("search-form");
     const searchInput = document.getElementById("search-input");
     const newsContainer = document.getElementById("news-container");
+    const bookmarksContainer = document.getElementById("bookmarks-container");
+    let bookmarks = JSON.parse(localStorage.getItem("bookmarks")) || [];
+
+    function updateBookmarksDisplay() {
+        bookmarksContainer.innerHTML = "";
+        if (bookmarks.length === 0) {
+            bookmarksContainer.innerHTML = "<p>No bookmarks yet.</p>";
+            return;
+        }
+        bookmarks.forEach(bookmark => {
+            const bookmarkItem = document.createElement("div");
+            bookmarkItem.className = "bookmark-item";
+
+            bookmarkItem.innerHTML = `
+                <h2>${bookmark.title || "No Title"}</h2>
+                <img src="${article.image_url || 'https://via.placeholder.com/150'}" alt="${article.title || 'No Title'}" style="width: 100%; max-height: 200px; object-fit: cover; margin-bottom: 10px;" />
+                <p>${bookmark.description || "No description available."}</p>
+                <a href="${bookmark.link}" target="_blank">Read more</a>
+            `;
+
+            bookmarksContainer.appendChild(bookmarkItem);
+        });
+    }
 
     async function fetchNews(query) {
         const url = `${BASE_URL}?apikey=${API_KEY}&q=${encodeURIComponent(query)}`;
@@ -34,19 +57,37 @@ document.addEventListener("DOMContentLoaded", () => {
                 <h2>${article.title || "No Title"}</h2>
                 <p>${article.description || "No description available."}</p>
                 <a href="${article.link}" target="_blank">Read more</a>
+                <button class="bookmark-btn">Bookmark</button>
             `;
+
+            const bookmarkBtn = newsItem.querySelector(".bookmark-btn");
+            bookmarkBtn.addEventListener("click", () => {
+                addBookmark(article);
+            });
 
             newsContainer.appendChild(newsItem);
         });
     }
 
+    function addBookmark(article) {
+        if (bookmarks.some(bookmark => bookmark.link === article.link)) {
+            alert("This article is already bookmarked.");
+            return;
+        }
+        bookmarks.push(article);
+        localStorage.setItem("bookmarks", JSON.stringify(bookmarks));
+        updateBookmarksDisplay();
+    }
+
     searchForm.addEventListener("submit", (event) => {
         event.preventDefault();
-        const query = searchInput.value.trim(); // Take input from the user
+        const query = searchInput.value.trim();
         if (query) {
-            fetchNews(query); // Pass the input dynamically as the `q` parameter
+            fetchNews(query);
         } else {
             newsContainer.innerHTML = "<p>Please enter a topic to search.</p>";
         }
     });
+
+    updateBookmarksDisplay(); 
 });
